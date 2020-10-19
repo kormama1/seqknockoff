@@ -14,13 +14,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Setup
-
-Open the R project file */seqknockoff/seqknockoff.Rproj*. Then load the `seqknockoff` package with the command
 ```{r setup, message=FALSE}
-devtools::load_all()
+library(seqknockoff)
 ```
-In general to load the package in any R session type `devtools::load_all("<path-to-repository>")` where `<path-to-repository>` is the location where you saved the repository directory (e.g. `~/Documents/seqknockoff`).
 
 ## Simulation Example
 
