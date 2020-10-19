@@ -306,17 +306,11 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 
 
-<div id="setup" class="section level1">
-<h1>Setup</h1>
-<p>Inside the <em>/seqknockoff</em> folder you can load the package with the following command</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">devtools<span class="op">::</span><span class="kw">load_all</span>()</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="co">#&gt; Loading seqknockoff</span></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">library</span>(seqknockoff)</a></code></pre></div>
-</div>
-<div id="simulation-example" class="section level1">
-<h1>Simulation Example</h1>
-<div id="generate-data-set" class="section level2">
-<h2>Generate data set</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(seqknockoff)</a></code></pre></div>
+<div id="simulation-example" class="section level2">
+<h2>Simulation Example</h2>
+<div id="generate-data-set" class="section level3">
+<h3>Generate data set</h3>
 <p>The <code>generate_X</code> function simulates the rows of an <span class="math inline">\(n \times p\)</span> data frame <span class="math inline">\(X\)</span> independently from a multivariate Gaussian distribution with mean <span class="math inline">\(0\)</span> and <span class="math inline">\(p \times p\)</span> covariance matrix <span class="math display">\[
 \Sigma_{ij} = \left \{
 \begin{array}{lr}
@@ -336,37 +330,26 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb3-4" data-line-number="4">y &lt;-<span class="st"> </span><span class="kw">generate_y</span>(<span class="dt">x =</span> x, <span class="dt">p_nn=</span><span class="dv">10</span>, <span class="dt">a=</span><span class="dv">3</span>)</a></code></pre></div>
 <p>First we created a model matrix version of the data.frame <code>X</code> by expanding the factors to a set of dummy variables. The binarized columns were then further scaled by a <span class="math inline">\(\sqrt{n}\)</span>-factor to ensure that the marginal (column-wise) variances are equal. In the above the first <code>p_nn=10</code> columns are non-null and the amplitude is <code>a=3</code>.</p>
 </div>
-<div id="generate-sequential-knockoff" class="section level2">
-<h2>Generate sequential knockoff</h2>
+<div id="generate-sequential-knockoff" class="section level3">
+<h3>Generate sequential knockoff</h3>
 <p>The function <code>seqknockoff</code> is the main function of the package. It receives as input a data.frame (or tibble) <code>X</code> whose columns are either of class <code>&quot;numeric&quot;</code> (for the continuous columns) or <code>&quot;factor&quot;</code> (for the binary columns). This is a common format of data involving both continuous and categorical predictors. To simulate a sequential knockoff copy of <code>X</code> we simply run</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">Xk &lt;-<span class="st"> </span><span class="kw">seqknockoff</span>(X)</a>
-<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="co">#&gt; Warning: from glmnet Fortran code (error code -86); Convergence for 86th</span></a>
-<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="co">#&gt; lambda value not reached after maxit=100000 iterations; solutions for</span></a>
-<a class="sourceLine" id="cb4-4" data-line-number="4"><span class="co">#&gt; larger lambdas returned</span></a>
-<a class="sourceLine" id="cb4-5" data-line-number="5"><span class="co">#&gt; Warning: from glmnet Fortran code (error code -90); Convergence for 90th</span></a>
-<a class="sourceLine" id="cb4-6" data-line-number="6"><span class="co">#&gt; lambda value not reached after maxit=100000 iterations; solutions for</span></a>
-<a class="sourceLine" id="cb4-7" data-line-number="7"><span class="co">#&gt; larger lambdas returned</span></a>
-<a class="sourceLine" id="cb4-8" data-line-number="8"><span class="co">#&gt; Warning: from glmnet Fortran code (error code -92); Convergence for 92th</span></a>
-<a class="sourceLine" id="cb4-9" data-line-number="9"><span class="co">#&gt; lambda value not reached after maxit=100000 iterations; solutions for</span></a>
-<a class="sourceLine" id="cb4-10" data-line-number="10"><span class="co">#&gt; larger lambdas returned</span></a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">Xk &lt;-<span class="st"> </span><span class="kw">seqknockoff</span>(X)</a></code></pre></div>
 <p>This will by default sample sequential knockoffs based on LASSO regression. Behind the scenes, <code>seqknockoff</code> calls the function <code>glmnet::cv.glmnet</code> sequentially and the user may optionally input other parameters of the <code>glmnet::cv.glmnet</code> function. For example, the below code will sample sequential knockoffs based on an elastic-net with penalty parameter <span class="math inline">\(\alpha=0.5\)</span></p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1">Xk &lt;-<span class="st"> </span><span class="kw">seqknockoff</span>(X, <span class="dt">alpha=</span><span class="fl">0.5</span>)</a></code></pre></div>
 </div>
-<div id="sequential-knockoff-filter" class="section level2">
-<h2>Sequential knockoff filter</h2>
+<div id="sequential-knockoff-filter" class="section level3">
+<h3>Sequential knockoff filter</h3>
 <p>After sampling the sequential knockoffs above, we can apply the knockoff filter of the <code>knockoff</code> R-package to select variables that influence <span class="math inline">\(y\)</span> with FDR control.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1">x &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(<span class="op">~</span>., <span class="dt">data=</span>X)[,<span class="op">-</span><span class="dv">1</span>]</a>
 <a class="sourceLine" id="cb6-2" data-line-number="2">xk &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(<span class="op">~</span>., <span class="dt">data=</span>Xk)[,<span class="op">-</span><span class="dv">1</span>]</a>
 <a class="sourceLine" id="cb6-3" data-line-number="3">  </a>
 <a class="sourceLine" id="cb6-4" data-line-number="4">W =<span class="st"> </span>knockoff<span class="op">::</span><span class="kw">stat.glmnet_coefdiff</span>(x, xk, y, <span class="dt">nfolds=</span><span class="dv">10</span>, <span class="dt">family=</span><span class="st">&quot;gaussian&quot;</span>)</a>
-<a class="sourceLine" id="cb6-5" data-line-number="5"><span class="co">#&gt; Loading required package: Matrix</span></a>
-<a class="sourceLine" id="cb6-6" data-line-number="6"><span class="co">#&gt; Loaded glmnet 3.0-2</span></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">  </a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">thres &lt;-<span class="st"> </span>knockoff<span class="op">::</span><span class="kw">knockoff.threshold</span>(W, <span class="dt">fdr=</span><span class="fl">0.2</span>, <span class="dt">offset=</span><span class="dv">1</span>)</a>
 <a class="sourceLine" id="cb6-7" data-line-number="7">  </a>
-<a class="sourceLine" id="cb6-8" data-line-number="8">thres &lt;-<span class="st"> </span>knockoff<span class="op">::</span><span class="kw">knockoff.threshold</span>(W, <span class="dt">fdr=</span><span class="fl">0.2</span>, <span class="dt">offset=</span><span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb6-9" data-line-number="9">  </a>
-<a class="sourceLine" id="cb6-10" data-line-number="10">selected &lt;-<span class="st"> </span><span class="kw">which</span>(W <span class="op">&gt;=</span><span class="st"> </span>thres)</a>
-<a class="sourceLine" id="cb6-11" data-line-number="11">selected</a>
-<a class="sourceLine" id="cb6-12" data-line-number="12"><span class="co">#&gt;  [1]  1  2  3  4  6  7  8 10 15 22 25</span></a></code></pre></div>
+<a class="sourceLine" id="cb6-8" data-line-number="8">selected &lt;-<span class="st"> </span><span class="kw">which</span>(W <span class="op">&gt;=</span><span class="st"> </span>thres)</a>
+<a class="sourceLine" id="cb6-9" data-line-number="9">selected</a>
+<a class="sourceLine" id="cb6-10" data-line-number="10"><span class="co">#&gt;  [1]  1  2  3  4  6  7  8 10 15 22 25</span></a></code></pre></div>
 </div>
 </div>
 
