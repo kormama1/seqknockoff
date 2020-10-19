@@ -1,0 +1,77 @@
+---
+title: "seqknockoff - quick start"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{seqknockoff-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Setup
+
+Open the R project file */seqknockoff/seqknockoff.Rproj*. Then load the `seqknockoff` package with the command
+```{r setup, message=FALSE}
+devtools::load_all()
+```
+In general to load the package in any R session type `devtools::load_all("<path-to-repository>")` where `<path-to-repository>` is the location where you saved the repository directory (e.g. `~/Documents/seqknockoff`).
+
+## Simulation Example
+
+### Generate data set
+The `generate_X` function simulates the rows of an $n \times p$ data frame $X$ independently from a multivariate Gaussian distribution with mean $0$ and $p \times p$ covariance matrix 
+$$
+\Sigma_{ij} = \left \{
+\begin{array}{lr}
+1\{i \neq j\}/n, & \text{Independent,} \\
+\rho^{1\{i \neq j\}}/n, & \text{Equicorrelated,} \\
+\rho^{|i-j|}/n, & \text{AR1},
+\end{array}
+\right.
+$$
+where $p_b$ of the columns are then dichotomized with the indicator function $\delta(x)=1(x > 0)$. 
+```{r}
+set.seed(1)
+X <- generate_X(n=100, p=30, p_b=15, cov_type = "cov_ar1", rho=0.5)
+```
+The covariance type is specified with the parameter `cov_type` and the correlation coefficient with `rho`. Columns are shuffled after simulation. Note that each column of the resulting data.frame `X` is either of class `"numeric"` (for the continuous columns) or `"factor"` (for the binary columns).
+
+The `generate_y` function simulates a response $y$ from the conditional (sparse) regression model $y = X \beta + \varepsilon$ where $\varepsilon \sim N(0,I_n)$ and the first `p_nn` regression coefficients are non-zero, all other are set to zero. The amplitude of the non-zero regression coefficients is specified with `a`.
+```{r}
+x <- model.matrix(~., data=X)[,-1]
+which.factor <- as.numeric(which(sapply(X, is.factor)))
+x[,which.factor] <- x[,which.factor]/(0.5*sqrt(nrow(x)))
+y <- generate_y(x = x, p_nn=10, a=3)
+```
+First we created a model matrix version of the data.frame `X` by expanding the factors to a set of dummy variables. The binarized columns were then further scaled by a $\sqrt{n}$-factor to ensure that the marginal (column-wise) variances are equal. In the above the first `p_nn=10` columns are non-null and the amplitude is `a=3`.
+
+### Generate sequential knockoff
+
+The function `seqknockoff` is the main function of the package. It receives as input a data.frame (or tibble) `X` whose columns are either of class `"numeric"` (for the continuous columns) or `"factor"` (for the binary columns). This is a common format of data involving both continuous and categorical predictors. To simulate a sequential knockoff copy of `X` we simply run
+```{r, warning=FALSE}
+Xk <- seqknockoff(X)
+```
+This will by default sample sequential knockoffs based on LASSO regression. Behind the scenes, `seqknockoff` calls the function `glmnet::cv.glmnet` sequentially and the user may optionally input other parameters of the `glmnet::cv.glmnet` function. For example, the below code will sample sequential knockoffs based on an elastic-net with penalty parameter $\alpha=0.5$
+```{r}
+Xk <- seqknockoff(X, alpha=0.5)
+```
+
+### Sequential knockoff filter
+After sampling the sequential knockoffs above, we can apply the knockoff filter of the `knockoff` R-package to select variables that influence $y$ with FDR control. 
+```{r, message=FALSE}
+x <- model.matrix(~., data=X)[,-1]
+xk <- model.matrix(~., data=Xk)[,-1]
+  
+W = knockoff::stat.glmnet_coefdiff(x, xk, y, nfolds=10, family="gaussian")
+  
+thres <- knockoff::knockoff.threshold(W, fdr=0.2, offset=1)
+  
+selected <- which(W >= thres)
+selected
+```
