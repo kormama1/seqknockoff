@@ -15,7 +15,7 @@ An .html vignette with introduction to package functionality is located in:
 
 `seqknockoff/vignettes`
 
-and can be previewed [here].(https://htmlpreview.github.io/?https://github.com/kormama1/seqknockoff/blob/master/vignettes/seqknockoff-vignette.html)
+and can be previewed [here](https://htmlpreview.github.io/?https://github.com/kormama1/seqknockoff/blob/master/vignettes/seqknockoff-vignette.html).
 
 ## Contact us
 
