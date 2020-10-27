@@ -21,12 +21,12 @@ Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.6.0)
 Imports:
-    dplyr (>= 0.7.8),
-    ggplot2 (>= 3.2.0),
     glmnet (>= 3.0),
-    knockoff (>= 0.3.2)
+    knockoff (>= 0.3.2),
+    ggplot2 (>= 3.2.0)
 RoxygenNote: 6.1.1
 Suggests: 
+    dplyr (>= 0.7.8),
     blockcluster (>= 4.3.2),
     clustermq (>= 0.8.8),
     knitr,
