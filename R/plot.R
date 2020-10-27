@@ -29,6 +29,11 @@ plot_heatmap <- function(S, labels, nbcocluster=c(5,5)) {
                            variable=factor(labels),
                            selected=unlist(lapply(S, function(x) {zeros[x] <- 1; return(zeros)})))
 
+  if (!requireNamespace("blockcluster", quietly = TRUE)) {
+    warning("Package \"blockcluster\" is needed to order variables of heatmap by importance. Highly recommended to install it.",
+         call. = FALSE)
+  } else {
+
   biclust <- blockcluster::coclusterBinary(matrix(selections$selected,nrow=length(labels)), nbcocluster=nbcocluster)
 
   selections$varclass = factor(biclust@rowclass, ordered=TRUE)
@@ -52,8 +57,11 @@ plot_heatmap <- function(S, labels, nbcocluster=c(5,5)) {
            variable = factor(variable, levels = as.character(meta.var$variable))) %>%
     dplyr::arrange(drawclass) %>%
     dplyr::mutate(draw = factor(draw, levels = unique(draw))) %>%
-    dplyr::arrange(variable) %>%
-    dplyr::mutate(selected = factor(selected))
+    dplyr::arrange(variable)
+
+  }
+
+  selections <- selections %>% dplyr::mutate(selected = factor(selected))
 
   ggplot2::ggplot(mapping=ggplot2::aes(x = draw, y = variable)) +
     ggplot2::geom_tile(ggplot2::aes(fill = selected), data=selections) +

@@ -40,7 +40,7 @@ generate_X <- function(n, p, p_b, cov_type, rho=0.5) {
 
   sigma_z <- do.call(get(cov_type), args=list(n=n, p=p, rho=rho))
 
-  Z <- data.frame(mvtnorm::rmvnorm(n, rep(0, p), sigma_z, "chol"))
+  Z <- data.frame(matrix(rnorm(n*p), nrow=n) %*% chol(sigma_z, pivot=TRUE))
   X <- Z
 
   # Random indices for continuous and binary columns of X
