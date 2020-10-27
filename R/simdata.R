@@ -2,7 +2,7 @@
 #'
 #' simulate Gaussian predictors with mean zero
 #' and covariance structure determined by "cov_type" argument. Then p_b
-#' randomly selected columns are dichotomized using the sign function
+#' randomly selected columns are dichotomized.
 #'
 #' @param n number of observations (rows of X)
 #' @param p total number of covariates (columns of X) both continuous and binary
@@ -11,6 +11,11 @@
 #' "cov_diag" (independent columns), "cov_equi" (equi-correlated columns), or "cov_ar1" (ar1-correlated columns).
 #' The columns are shuffled during simulation
 #' @param rho correlation parameter; input to the cov_type function
+#'
+#' @details This function simulates a data frame, whose rows are multivariate Gaussian with mean zero
+#' and covariance structure determined by "cov_type" argument. Then p_b randomly selected columns are
+#' dichotomized with the function 1(x>0). The continuous columns are of class "numeric" and the binary
+#' columns are set to class "factor".
 #'
 #' @return the simulated data.frame with n rows and p columns (p_b of which are binary and p-p_b of which are gaussian).
 #' Each column is either of class "numeric" or "factor".
@@ -77,12 +82,25 @@ cov_ar1 <- function(n, p, rho = 0.5) {
 
 #' Simulate Gaussian response from a sparse regression model
 #'
-#' @param x matrix corresponding to the regression design matrix
-#' @param p_nn number of non-null covariate predictors. The regression coefficients corresponding to
+#' @param X matrix corresponding to the regression design matrix.
+#' Numeric columns of X should have variance = 1/nrow(X), default behavior of generate_X.
+#' @param p_nn number of non-null covariate predictors.
+#' The regression coefficients (beta) corresponding to
 #' columns 1:p_nn of x will be non-zero, all other are set to zero.
 #' @param a amplitude of non-null regression coefficients
 #'
-#' @return
+#' @details This function takes as input data.frame X (created with the function \code{generate_X})
+#' that may consist of both numeric and binary factor columns. This data frame is then expanded
+#' to a model matrix x (with the model.matrix function). The binary factor variables become dummy
+#' indicators that are then scaled by a 0.5*sqrt(nrow(X)) factor so that column-wise variance of the
+#' x is equal to 1/n. This makes sense as long as the variance of the numeric
+#' columns is also equal to 1/n (which it is if X is generated with the function \code{generate_X}).
+#' Next we simulate y ~ N(x%*%beta,I) where the first p_nn beta coefficients are equal to a, while
+#' the remaining coefficients (p_nn+1):ncol(x) are set to zero.
+#'
+#' @return simulated Gaussian response from regression model y = x%*%beta+epsilon, where epsilon ~ N(0,I) and
+#' x is the model.matrix of X and the binary dummy indicators of x have been scaled so variance = 1/nrow(X).
+#'
 #' @export
 #'
 #' @examples
@@ -93,16 +111,13 @@ cov_ar1 <- function(n, p, rho = 0.5) {
 #' # Simulate 4 Gaussian and 2 binary covariate predictors:
 #' X <- generate_X(n=100, p=6, p_b=2, cov_type="cov_equi", rho=0.5)
 #'
-#' # Obtain the corresponding model matrix:
-#' x <- model.matrix(~., data=X)[,-1]
-#'
-#' # Scale the binary dummy-variables so column-wise variance of x is same:
-#' which.factor <- as.numeric(which(sapply(X, is.factor)))
-#' x[,which.factor] <- x[,which.factor]/(0.5*sqrt(nrow(x)))
-#'
-#' # Simulate response from model y = 2*x[,1] + 2*x[,2] + epsilon, where epsilon ~ N(0,1)
-#' y <- generate_y(x, p_nn=2, a=2)
-generate_y <- function(x, p_nn, a) {
+#' # Simulate response from model y = 2*X[,1] + 2*X[,2] + epsilon, where epsilon ~ N(0,1)
+#' y <- generate_y(X, p_nn=2, a=2)
+generate_y <- function(X, p_nn, a) {
+
+  x <- model.matrix(~., data=X)[,-1]
+  which.factor <- as.numeric(which(sapply(X, is.factor)))
+  x[,which.factor] <- x[,which.factor]/(0.5*sqrt(nrow(x)))
 
   n <- nrow(x)
   p <- ncol(x)

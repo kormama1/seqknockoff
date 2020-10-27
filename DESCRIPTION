@@ -2,19 +2,33 @@ Package: seqknockoff
 Title: Sequential knockoffs for continuous and categorical variables
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "Matthias",
+    c(person(given = "Matthias",
            family = "Kormaksson",
            role = c("aut", "cre"),
-           email = "matthias.kormaksson@novartis.com")
-Description: What the package does (one paragraph).
+           email = "matthias.kormaksson@novartis.com"),
+      person(given = "Luke",
+           family = "Kelly",
+           role = "aut"),
+      person(given = "Xuan",
+           family = "Zhu",
+           role = "aut"),
+      person(given = "David",
+           family = "Ohlssen",
+           role = "aut"))
+Description: Sequential knockoffs for continuous and categorical variables. The default simulator estimates an elastic-net model sequentially by calling the package glmnet. 
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.6.0)
 Imports:
-    glmnet (>= 3.0-2)
+    dplyr (>= 0.7.8),
+    ggplot2 (>= 3.2.0),
+    glmnet (>= 3.0),
+    knockoff (>= 0.3.2),
+    blockcluster (>= 4.3.2)
 RoxygenNote: 6.1.1
 Suggests: 
+    clustermq (>= 0.8.8),
     knitr,
     rmarkdown
 VignetteBuilder: knitr

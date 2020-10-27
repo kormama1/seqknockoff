@@ -1,5 +1,8 @@
 ---
-title: "seqknockoff - quick start"
+title: "The seqknockoff package"
+author: 
+   - Matthias Kormaksson, Luke Kelly, Xuan Zhu, and David Ohlssen
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{seqknockoff-vignette}
@@ -14,14 +17,18 @@ knitr::opts_chunk$set(
 )
 ```
 
+## Introduction
+
+In Kormaksson et al. (2020) we presented sequential knockoffs and performed extensive simulations to evaluate performance of the methodology. In the following we demonstrate code that can be used to reproduce the preprint's results. In particular, we provide functions for generating data sets, simulating knockoffs (MX and sequential), applying the (single and multiple) knockoff filter for variable selection, visualizing selections, and finally evaluating performance in terms of false discovery rate and true positive rate.
+
+## Package main functions
+
 ```{r setup, message=FALSE}
 library(seqknockoff)
 ```
 
-## Simulation Example
-
-### Generate data set
-The `generate_X` function simulates the rows of an $n \times p$ data frame $X$ independently from a multivariate Gaussian distribution with mean $0$ and $p \times p$ covariance matrix 
+### Data generation {#simdata}
+*Simulation of $X$:* The `generate_X` function simulates the rows of an $n \times p$ data frame $X$ independently from a multivariate Gaussian distribution with mean $0$ and $p \times p$ covariance matrix 
 $$
 \Sigma_{ij} = \left \{
 \begin{array}{lr}
@@ -31,43 +38,167 @@ $$
 \end{array}
 \right.
 $$
-where $p_b$ of the columns are then dichotomized with the indicator function $\delta(x)=1(x > 0)$. 
-```{r}
-set.seed(1)
-X <- generate_X(n=100, p=30, p_b=15, cov_type = "cov_ar1", rho=0.5)
+where $p_b$ randomly selected columns are then dichotomized with the indicator function $\delta(x)=1(x > 0)$. 
+```{r, eval=FALSE}
+# Generate a 2000 x 50 Gaussian data.frame under AR1(rho=0.5) covariance structure, 
+# with 20 of the columns  dichotomized
+X <- generate_X(n=2000, p=50, p_b=20, cov_type = "cov_ar1", rho=0.5)
 ```
-The covariance type is specified with the parameter `cov_type` and the correlation coefficient with `rho`. Columns are shuffled after simulation. Note that each column of the resulting data.frame `X` is either of class `"numeric"` (for the continuous columns) or `"factor"` (for the binary columns).
+The covariance type is specified with the parameter `cov_type` and the correlation coefficient with `rho`. Columns are shuffled after simulation. Each column of the resulting data.frame is either of class `"numeric"` (for the continuous columns) or `"factor"` (for the binary columns).
 
-The `generate_y` function simulates a response $y$ from the conditional (sparse) regression model $y = X \beta + \varepsilon$ where $\varepsilon \sim N(0,I_n)$ and the first `p_nn` regression coefficients are non-zero, all other are set to zero. The amplitude of the non-zero regression coefficients is specified with `a`.
-```{r}
-x <- model.matrix(~., data=X)[,-1]
-which.factor <- as.numeric(which(sapply(X, is.factor)))
-x[,which.factor] <- x[,which.factor]/(0.5*sqrt(nrow(x)))
-y <- generate_y(x = x, p_nn=10, a=3)
+*Simulation of $y|X$:* The `generate_y` function simulates a response $y$ from the (sparse) regression model 
+$$
+y = X \beta + \varepsilon, \textrm{ where } \varepsilon \sim N(0,I_n),
+$$ 
+where the first `p_nn` regression coefficients are non-zero, all other are set to zero. The (common) amplitude of the non-zero regression coefficients is specified with `a`.
+```{r, eval=FALSE}
+# Generate y ~ N(X%*%beta,I_n) where first 10 beta-coefficients are = 3, all other = 0.
+y <- generate_y(X = X, p_nn=10, a=3)
 ```
-First we created a model matrix version of the data.frame `X` by expanding the factors to a set of dummy variables. The binarized columns were then further scaled by a $\sqrt{n}$-factor to ensure that the marginal (column-wise) variances are equal. In the above the first `p_nn=10` columns are non-null and the amplitude is `a=3`.
+Inside `generate_y` the binarized columns of `X` are first scaled by a $\sqrt{n}$-factor to ensure that the marginal (column-wise) variances of the model.matrix of `X` are all equal to $1/n$. 
 
-### Generate sequential knockoff
+### Knockoff generation
 
-The function `seqknockoff` is the main function of the package. It receives as input a data.frame (or tibble) `X` whose columns are either of class `"numeric"` (for the continuous columns) or `"factor"` (for the binary columns). This is a common format of data involving both continuous and categorical predictors. To simulate a sequential knockoff copy of `X` we simply run
-```{r, warning=FALSE}
-Xk <- seqknockoff(X)
+*Sequential knockoffs:* The function `knockoffs_seq` is the most important function of the package. It receives as input a data.frame (or tibble) `X` whose columns are either of class `"numeric"` (for the continuous columns) or `"factor"` (for the categorical columns). This is a common format of data involving both continuous and categorical predictors. The output is a data.frame (or tibble) corresponding to the sequential knockoffs of `X`:
+```{r, warning=FALSE, eval=FALSE}
+# Simulate sequential knockoff of X:
+Xk <- knockoffs_seq(X)
 ```
-This will by default sample sequential knockoffs based on LASSO regression. Behind the scenes, `seqknockoff` calls the function `glmnet::cv.glmnet` sequentially and the user may optionally input other parameters of the `glmnet::cv.glmnet` function. For example, the below code will sample sequential knockoffs based on an elastic-net with penalty parameter $\alpha=0.5$
-```{r}
-Xk <- seqknockoff(X, alpha=0.5)
+The above function will by default sample sequential knockoffs based on LASSO regression. Behind the scenes, `knockoffs_seq` calls the function `glmnet::cv.glmnet` sequentially and the user may optionally input other parameters of the `glmnet::cv.glmnet` function. For example, the below code will sample sequential knockoffs based on an elastic-net with penalty parameter $\alpha=0.5$
+```{r, eval=FALSE}
+# Simulate sequential knockoff of X based on sequential elastic-net with penalty parameter alpha.
+Xk <- knockoffs_seq(X, alpha=0.5)
 ```
 
-### Sequential knockoff filter
-After sampling the sequential knockoffs above, we can apply the knockoff filter of the `knockoff` R-package to select variables that influence $y$ with FDR control. 
+*MX-knockoffs:* We also offer a wrapper function `knockoffs_mx` to simulate Gaussian MX-knockoffs (via call to `knockoff::create.second_order`). This function only works on data frames with all "numeric" columns.
+```{r, eval=FALSE}
+# Generate a 2000 x 50 Gaussian data.frame under AR1(rho=0.5) covariance structure, 
+X <- generate_X(n=2000, p=50, p_b=0, cov_type = "cov_ar1", rho=0.5)
+# Simulate second order multivariate Gaussian MX knockoff:
+Xk <- knockoffs_mx(X)
+```
+
+### Knockoff filter
+The function `knockoff_filter` implements the [The knockoff filter procedure](#knockoff-filter-procedure), which takes as input `X`, `y`, `fdr`, `family` and the additional parameters `knockoffs` and `statistic`. The parametrization is inspired by the `knockoff::knockoff.filter` function and allows the user to specify multiple FDR thresholds `fdr`. The parameter `knockoffs` represents a user-specified knockoff simulating function. The default is `knockoffs=knockoffs_seq` for general data frames `X` with numeric and factor columns, but can also be `knockoffs=knockoffs_mx` for data frames with only numeric columns. The parameter `statistic` is a user-specified function to calculate feature statistics to distinguish between the original and knockoff variables. By default  `statistic=stat_glmnet` (importance statistics based on GLM involving the model.matrix of `X`; which internally calls the `knockoff::stat.glmnet_coefdiff` function). See `?stat_glmnet` for details.
+```{r, message=FALSE, warning=FALSE}
+set.seed(123)
+X <- generate_X(n=2000, p=50, p_b=20, cov_type = "cov_ar1", rho=0.5)
+y <- generate_y(X = X, p_nn=10, a=3)
+S <- knockoff_filter(X, y, fdr=c(0.05, 0.1, 0.2))
+S
+```
+The output is a list of selections from the different thresholds. If only a single fdr threshold is provided the output is simply a vector of selected indices.
+
+### Multiple knockoffs filter
+
+In order to evaluate robustness of the knockoff filter we may run it several times, each time simulating a new knockoff of `X`. Since the `knockoff_filter` may take long to run, in particular with sequential knockoffs (`knockoffs=knockoffs_seq`), we recommend to use parallel computing on an HPC infrastructure. Here we demonstrate how one could use the R-package `clustermq` for that purpose. Note that the user needs to specify a cluster.scheduler that is HPC system dependent. On our HPC we utilize the LSF job scheduler, but other options (including local parallelization) are outlined here: [User Guide - clustermq](https://cran.r-project.org/web/packages/clustermq/vignettes/userguide.html)
 ```{r, message=FALSE}
-x <- model.matrix(~., data=X)[,-1]
-xk <- model.matrix(~., data=Xk)[,-1]
-  
-W = knockoff::stat.glmnet_coefdiff(x, xk, y, nfolds=10, family="gaussian")
-  
-thres <- knockoff::knockoff.threshold(W, fdr=0.2, offset=1)
-  
-selected <- which(W >= thres)
-selected
+library(clustermq)
+options(clustermq.scheduler = "lsf") # System specific HPC job scheduler
 ```
+The user-friendly `Q`-function allows us to run the `knockoff_filter` with `fdr=0.2` $100$ times in parallel:
+```{r, message=FALSE}
+set.seed(123)
+X <- generate_X(n=2000, p=50, p_b=20, cov_type = "cov_ar1", rho=0.5)
+y <- generate_y(X = X, p_nn=10, a=3)
+S <- Q(knockoff_filter, fdr = rep(0.2, 100), const = list(X=X, y=y, knockoffs=knockoffs_seq, 
+       statistic=stat_glmnet), pkgs="seqknockoff", n_jobs=100, seed=1)
+```
+The output `S` is a list of selected variable indices across the $100$ replicates. The above call to the `Q`-function is the parallel equivalent to the following inefficient loop (not run):
+```{r, eval=FALSE}
+S <- list()
+for (count in 1:100) {
+  S[[count]] <- knockoff_filter(X, y, fdr=0.2, knockoffs=knockoffs_seq, statistic=stat_glmnet)
+}
+```
+
+The final selection is determined using the heuristics in [The multiple knockoffs filter procedure](#multiple-knockoffs-filter-procedure), which is implemented in the function `multi_select`
+```{r}
+multi_select(S, p=50)
+```
+
+### Heatmap of multiple variable selections
+
+In order to evaluate the robustness of the knockoff selection procedure we can visualize a heatmap of the selections across the knockoff replicates. The function `plot_heatmap` facilitates this visualization and takes as input the above list of selection indicies along with actual variable labels. The output is a $p \times B$ binary heatmap, where rows correspond to variables and each column $b$ records which variables were selected with knockoff filter replicate $b=1,\dots,B$.
+```{r, fig.width=7.15, fig.height=4.5, fig.fullwidth=TRUE}
+plot_heatmap(S, labels=paste0("x",1:50))
+```
+Note the message "Co-Clustering successfully terminated!". We apply co-clustering of the rows and columns of the heatmap with the `blockcluster` package, which identifies blocks of similarities in the binary selections. We then order the blocks according to increasing mean number of selections. This helps with aesthetics, but also helps visualize the most important variables that should tend towards the top of the heatmap.
+
+## Simulation experiment
+
+Consider an experiment aimed at comparing variable selection performance between the MX and sequential knockoff filters. We simulate a gaussian design matrix $X$ with $n$ rows and $p$ columns, and AR1($\rho$) correlation structure. We then simulate response $y \sim N(X\beta,I_n)$ where the first $p_{nn}$ of the $\beta$-coefficients are equal to $a$, while all other coefficients are equal to zero. We then apply the `knockoff_filter` with both MX and sequential knockoffs. Finally, we record False Discovery Proportions (with function `eval_fdp`) and True Positive Proportions (with function `eval_tpp`).
+
+We implement a function that performs the above for a single simulated data set $(X,y)$:
+```{r}
+sim_experiment <- function(n, p, cov_type="cov_ar1", rho, p_nn, a) {
+
+  # Generate Gaussian design matrix:
+  X <- generate_X(n=n, p=p, p_b=0, cov_type="cov_ar1", rho=rho)
+  # Simulate y given X:
+  y <- generate_y(X=X, p_nn=p_nn, a=a)
+  # Apply MX and sequential knockoff filters:
+  S.mx <- knockoff_filter(X=X, y=y, fdr=0.2, knockoffs=knockoffs_mx)
+  S.seq <- knockoff_filter(X=X, y=y, fdr=0.2, knockoffs=knockoffs_seq)
+
+  # Evaluate fdp and tpp for each method:
+  results <- data.frame(method = c("MX Knockoff", "Seq Knockoff"),
+                        fdp = c(eval_fdp(S.mx, negatives=(p_nn+1):p), 
+                                eval_fdp(S.seq, negatives=(p_nn+1):p)),
+                        tpp = c(eval_tpp(S.mx, positives=1:p_nn), 
+                                eval_tpp(S.seq, positives=1:p_nn)),
+                        a = a)
+  
+  return(results)
+  
+}
+```
+We then utilize the `clustermq` package to run the above function in parallel for different amplitudes $a \in \{1,2,3,4,5\}$ and across $n_{sim}=100$ replicates per amplitude.
+```{r, message=FALSE, warning=FALSE}
+results_list <- Q(sim_experiment, a = rep(1:5, each=100), const = list(n=2000, p=200, 
+                  cov_type="cov_ar1", rho=0.5, p_nn=50), pkgs="seqknockoff", n_jobs=100, seed=1)
+results <- do.call("rbind", results_list)
+```
+We can now compare boxplots of false discovery proportions (fdp) and and true positive proportions (tpp) as a function of amplitude.
+```{r, fig.width=7.15, fig.height=4.5, fig.fullwidth=TRUE}
+library(ggplot2)
+ggplot(mapping=aes(x=factor(a), y=fdp), data=results) + 
+  geom_boxplot(aes(fill=method)) + 
+  stat_summary(aes(group=method, colour=method), fun.y="mean", geom="line") +
+  scale_y_continuous(breaks=c(0, 0.2, 0.4, 0.6, 0.8, 1), minor_breaks = NULL) +
+  xlab("Amplitude") +
+  ggtitle("False Discovery Rate Curves") +
+  theme(legend.position="bottom")
+```
+```{r, fig.width=7.15, fig.height=4.5, fig.fullwidth=TRUE}
+ggplot(mapping=aes(x=factor(a), y=tpp), data=results) + 
+  geom_boxplot(aes(fill=method)) + 
+  stat_summary(aes(group=method, colour=method), fun.y="mean", geom="line") +
+  xlab("Amplitude") +
+  ggtitle("Power Curves") +
+  theme(legend.position="bottom")
+```
+The overlaid mean curves are estimates of false discovery rate (fdr) and power.
+
+## Appendix {#appendix}
+
+### A. The knockoff filter procedure {#knockoff-filter-procedure}
+
+The Knockoff-filter is defined by the following steps:
+
+1. Simulate a knockoff copy $\tilde{X}$ of the original data $X$.
+2. Compute feature statistics $W_j=w_j((X,\tilde{X}),Y)$ to distinguish between $X_j$ and its knockoff $\tilde{X}_j$. Large, positive statistics indicate association with $Y$.
+3. Use the *knockoffs$+$* procedure to select variables $j$ that fulfill $W_j \geq \tau_+$ where
+$$
+\tau_+ = \underset{t>0}{\operatorname{argmin}} \left\{\frac{1 + |\{j : W_j \leq t\}|}{|\{j : W_j \leq t\}|} \leq q\right\}.
+$$
+
+### B. The multiple knockoffs filter procedure {#multiple-knockoffs-filter-procedure}
+
+Let $\tilde{X}_1, \dots, \tilde{X}_B$ denote $B$ independent knockoff copies of $X$. For each knockoff copy $b$ run the knockoff filter and select the set of influential variables, $S_b \subseteq \{1,\dots,p\}$. We propose the following heuristics to select a final set of variables:
+
+* Let $F(r) \subseteq \{1,\dots,p\}$, where $r \in [0.5, 1]$, denote the set of variables selected more than $r \cdot B$ times out of the $B$ knockoff draws.
+* Let $S(r)=\underset{b}{\rm mode}\{F(r) \cap S_b\}$ denote the set of selected variables that appears most frequently, after filtering out variables that are not in $F(r)$.
+* Return $\hat{S} = S(\hat{r})$, where $\hat{r} = \underset{r \geq 0.5}{\operatorname{argmax}} |{S(r)}|$, i.e. the largest set among $\{S(r):r \geq 0.5\}$.
+
+The first step above essentially filters out variables that don't appear more than $(100\cdot r)\%$ of the time, which would seem like a reasonable requirement in practice (e.g. with $r=0.5$). The second step above then filters the $B$ knockoff selections $S_b$ accordingly and searches for the most frequent variable set among those. The third step then establishes the final selection, namely the most liberal variable selection among the sets $\{S(r):r \geq 0.5\}$.

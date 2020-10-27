@@ -2,10 +2,10 @@
 #'
 #' @param X data.frame (or tibble) with "numeric" and "factor" columns only. The number of columns, ncol(X) needs to be > 2.
 #' @param seq_simulator function that simulates sequential knockoffs. Default is the function \code{sim_EN}, which simulates response from an estimated elastic-net model
-#' @param ... other parameters passed to the function seq_simulator. For the default (elastic-net sequential simulator, \code{seq_simulator = sim_EN})
+#' @param ... other parameters passed to the function seq_simulator. For the default (elastic-net sequential seq_simulator, \code{seq_simulator = sim_EN})
 #' these other parameters are passed to cv.glmnet.
 #'
-#' @details \code{seqknockoff} performs sequential knockoff simulation.
+#' @details \code{knockoffs_seq} performs sequential knockoff simulation using elastic-net regression.
 #' @return sequential knockoff copy of X. A data.frame or tibble of same type and dimensions as X.
 #' @export
 #'
@@ -17,17 +17,17 @@
 #' X <- generate_X(n=100, p=6, p_b=2, cov_type="cov_equi", rho=0.5)
 #'
 #' # knockoffs based on sequential elastic-net regression with penalty alpha:
-#' Xk <- seqknockoff(X, alpha=0.5)
-seqknockoff <- function(X, seq_simulator = sim_EN, ...) {
+#' Xk <- knockoffs_seq(X, alpha=0.5)
+knockoffs_seq <- function(X, seq_simulator = sim_EN, ...) {
 
-  if (ncol(X)<=2) stop("The number of columns, ncol(X) needs to be > 2")
+  check_design(X)
 
   knockoffs <- X
 
   # add ".tilde" to column names:
   names(knockoffs) <- paste0(names(knockoffs),".tilde")
 
-  # Randomly shuffle column indicies of X:
+  # Randomly shuffle column indices of X:
   shf <- sample(ncol(X))
 
   # Loop through the columns of input data (in random order)
@@ -35,13 +35,11 @@ seqknockoff <- function(X, seq_simulator = sim_EN, ...) {
   for (i in shf) {
 
     y <- X[[i]] # i-th column serves as response
-    x.mat <- X[,-i] # columns[-i] serve as covariates
+    Xp <- X[,-i] # columns[-i] serve as predictors
 
-    if (loop.count > 1) x.mat <- cbind(knockoffs[,shf[1:(loop.count-1)]], x.mat)
+    if (loop.count > 1) Xp <- cbind(knockoffs[,shf[1:(loop.count-1)]], Xp)
 
-    x.mat <- model.matrix(~., data = x.mat)[,-1]
-
-    knockoffs[[i]] <- seq_simulator(y = y, x = x.mat, ...)
+    knockoffs[[i]] <- seq_simulator(y = y, X = Xp, ...)
 
     loop.count <- loop.count + 1
 
@@ -58,7 +56,7 @@ seqknockoff <- function(X, seq_simulator = sim_EN, ...) {
 #' Simulate from elastic-net regression model
 #'
 #' @param y response vector (either "numeric" or "factor") that gets passed to cv.glmnet
-#' @param x input matrix that gets passed to cv.glmnet
+#' @param X data.frame of covariates that are passed to cv.glmnet
 #' @param ... other parameters passed to the function cv.glmnet
 #'
 #' @return
@@ -69,15 +67,17 @@ seqknockoff <- function(X, seq_simulator = sim_EN, ...) {
 #'
 #' set.seed(1)
 #'
-#' x = matrix(rnorm(100 * 20), 100, 20)
-#' y = x[,1] + rnorm(100)
+#' X = data.frame(matrix(rnorm(100 * 20), 100, 20))
+#' y = X[,1] + rnorm(100)
 #'
 #' # simulate from elastic-net regression with elastic-net penalty alpha:
-#' ysim = sim_EN(y=y, x=x, alpha=0.5)
+#' ysim = sim_EN(y=y, X=X, alpha=0.5)
 #'
 #' # simulated versus input response:
 #' plot(y, ysim)
-sim_EN <- function(y=y, x=x, ...) {
+sim_EN <- function(y, X, ...) {
+
+  x <- model.matrix(~., data = X)[,-1]
 
   if (is.factor(y)) {
 
@@ -124,5 +124,33 @@ sim_EN <- function(y=y, x=x, ...) {
   }
 
   return(y.sim)
+
+}
+
+
+#' Gaussian MX-knockoffs for continuous variables
+#'
+#' @param X  data.frame (or tibble) with "numeric" columns only. The number of columns, ncol(X) needs to be > 2.
+#'
+#' @details \code{knockoffs_mx} performs MX knockoff simulation.
+#'
+#' @return Second-order multivariate Gaussian knockoff copy of X
+#' @export
+#'
+#' @examples
+#' #' library(seqknockoff)
+#'
+#' set.seed(1)
+#'
+#' X <- generate_X(n=100, p=6, p_b=0, cov_type="cov_equi", rho=0.5)
+#'
+#' Xk <- knockoffs_mx(X)
+knockoffs_mx <- function(X) {
+
+  check_design(X, method="mx")
+
+  knockoffs <- data.frame(knockoff::create.second_order(as.matrix(X)))
+
+  return(knockoffs)
 
 }

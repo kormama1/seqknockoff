@@ -17,4 +17,4 @@ A vignette with a quick start introduction to the package functionality can be f
 
 ## Contact us
 
-The maintainer of this package is **Matthias Kormaksson**. For any questions feel free to reach out via e-mail: **matthias.kormaksson@novartis.com**.
+The maintainer of this package is **Matthias Kormaksson**. For any questions feel free to reach out by e-mail: **FirstName[dot]LastName[at]novartis.com**.
