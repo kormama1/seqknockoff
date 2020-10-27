@@ -1,4 +1,4 @@
-`seqknockoff` R-package
+The `seqknockoff` package
 ====================
 
 Sequential knockoffs for continuous and categorical variables
@@ -11,9 +11,11 @@ To install the R-package:
 
 ## How to use the package
 
-A vignette with a quick start introduction to the package functionality can be found in:
+An .html vignette with introduction to package functionality is located in:
 
-`seqknockoff/vignettes/seqknockoff-vignette.html`
+`seqknockoff/vignettes`
+
+and can be previewed [here].(https://htmlpreview.github.io/?https://github.com/kormama1/seqknockoff/blob/master/vignettes/seqknockoff-vignette.html)
 
 ## Contact us
 
