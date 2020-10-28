@@ -11,11 +11,7 @@ To install the R-package:
 
 ## How to use the package
 
-An .html vignette with introduction to package functionality is located in:
-
-`seqknockoff/vignettes`
-
-and can be previewed [here](https://htmlpreview.github.io/?https://github.com/kormama1/seqknockoff/blob/master/doc/seqknockoff-vignette.html).
+An .html vignette with introduction to package can be previewed [here](https://htmlpreview.github.io/?https://github.com/kormama1/seqknockoff/blob/master/doc/seqknockoff-vignette.html).
 
 ## Contact us
 
