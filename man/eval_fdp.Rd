@@ -2,7 +2,7 @@
 % Please edit documentation in R/performance.R
 \name{eval_fdp}
 \alias{eval_fdp}
-\title{false discovery proportion (fdp) as function of selection and known negatives:}
+\title{False discovery proportion (fdp) as function of selection and known negatives:}
 \usage{
 eval_fdp(selected, negatives)
 }
@@ -15,7 +15,7 @@ eval_fdp(selected, negatives)
 false discovery rate
 }
 \description{
-false discovery proportion (fdp) as function of selection and known negatives:
+False discovery proportion (fdp) as function of selection and known negatives:
 }
 \examples{
 library(seqknockoff)

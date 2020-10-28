@@ -28,9 +28,14 @@ By default \code{statistic=stat_glmnet} (see ?stat_glmnet).}
 if length(fdr)=1 the function returns a vector of selected indices, otherwise a list of selected indices, one selection vector per fdr threshold supplied.
 }
 \description{
-This is an adaptation of the knockoff.filter function from the R-package knockoff. It
-allows for input X with both "numeric" and "factor" columns, input y can be either
-numeric or binary factor, and user may specify multiple fdr thresholds.
+This is an adaptation of the knockoff.filter function from the R-package knockoff.
+}
+\details{
+This function takes input X with either "numeric" or "factor" columns (or both), input y can be either
+numeric or binary factor, and user may specify multiple fdr thresholds. The function performs the
+knockoff filter, which consists of three steps: 1) Simulate knockoff of X with the input function \code{knockoffs},
+2) calculate importance statistic W with the input function \code{statistic}, and 3) calculate the knockoff+ threshold
+for each target fdr provided. Finally, selection is made based on W > threshold.
 }
 \examples{
 library(seqknockoff)

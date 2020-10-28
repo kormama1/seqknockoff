@@ -13,6 +13,9 @@ sim_EN(y, X, ...)
 
 \item{...}{other parameters passed to the function cv.glmnet}
 }
+\value{
+simulated response
+}
 \description{
 Simulate from elastic-net regression model
 }

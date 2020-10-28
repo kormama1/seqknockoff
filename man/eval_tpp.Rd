@@ -2,7 +2,7 @@
 % Please edit documentation in R/performance.R
 \name{eval_tpp}
 \alias{eval_tpp}
-\title{true positive proportion (tpp) as function of selection and known positives:}
+\title{True positive proportion (tpp) as function of selection and known positives:}
 \usage{
 eval_tpp(selected, positives)
 }
@@ -15,7 +15,7 @@ eval_tpp(selected, positives)
 true positive rate
 }
 \description{
-true positive proportion (tpp) as function of selection and known positives:
+True positive proportion (tpp) as function of selection and known positives:
 }
 \examples{
 #' library(seqknockoff)

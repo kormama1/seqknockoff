@@ -7,7 +7,12 @@
 check_design(X, method = "seq")
 }
 \arguments{
-\item{method}{}
+\item{X}{data frame or tibble}
+
+\item{method}{character string, either "seq" or "mx"}
+}
+\value{
+this function doesn't return anything
 }
 \description{
 Do not call this function on its own

@@ -15,6 +15,9 @@ Second-order multivariate Gaussian knockoff copy of X
 \description{
 Gaussian MX-knockoffs for continuous variables
 }
+\details{
+\code{knockoffs_mx} performs MX knockoff simulation.
+}
 \examples{
 #' library(seqknockoff)
 

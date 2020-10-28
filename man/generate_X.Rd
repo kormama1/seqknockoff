@@ -26,7 +26,13 @@ Each column is either of class "numeric" or "factor".
 \description{
 simulate Gaussian predictors with mean zero
 and covariance structure determined by "cov_type" argument. Then p_b
-randomly selected columns are dichotomized using the sign function.
+randomly selected columns are dichotomized.
+}
+\details{
+This function simulates a data frame, whose rows are multivariate Gaussian with mean zero
+and covariance structure determined by "cov_type" argument. Then p_b randomly selected columns are
+dichotomized with the function 1(x>0). The continuous columns are of class "numeric" and the binary
+columns are set to class "factor".
 }
 \examples{
 library(seqknockoff)

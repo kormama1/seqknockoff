@@ -17,11 +17,21 @@ columns 1:p_nn of x will be non-zero, all other are set to zero.}
 \item{a}{amplitude of non-null regression coefficients}
 }
 \value{
-simulated Gaussian response from regression model y = X%*%beta+epsilon, where epsilon ~ N(0,1). Binary factor columns of X are
-transformed to dummy 0/1 variables and then scaled so variance = 1/nrow(X).
+simulated Gaussian response from regression model y = x%*%beta+epsilon, where epsilon ~ N(0,I) and
+x is the model.matrix of X and the binary dummy indicators of x have been scaled so variance = 1/nrow(X).
 }
 \description{
 Simulate Gaussian response from a sparse regression model
+}
+\details{
+This function takes as input data.frame X (created with the function \code{generate_X})
+that may consist of both numeric and binary factor columns. This data frame is then expanded
+to a model matrix x (with the model.matrix function). The binary factor variables become dummy
+indicators that are then scaled by a 0.5*sqrt(nrow(X)) factor so that column-wise variance of the
+x is equal to 1/n. This makes sense as long as the variance of the numeric
+columns is also equal to 1/n (which it is if X is generated with the function \code{generate_X}).
+Next we simulate y ~ N(x%*%beta,I) where the first p_nn beta coefficients are equal to a, while
+the remaining coefficients (p_nn+1):ncol(x) are set to zero.
 }
 \examples{
 library(seqknockoff)

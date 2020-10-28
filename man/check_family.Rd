@@ -7,7 +7,12 @@
 check_family(y, family)
 }
 \arguments{
-\item{family}{}
+\item{y}{response variable}
+
+\item{family}{character string, either "gaussian" or "binomial"}
+}
+\value{
+this function doesn't return anything
 }
 \description{
 Do not call this function on its own

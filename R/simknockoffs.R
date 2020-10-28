@@ -59,7 +59,7 @@ knockoffs_seq <- function(X, seq_simulator = sim_EN, ...) {
 #' @param X data.frame of covariates that are passed to cv.glmnet
 #' @param ... other parameters passed to the function cv.glmnet
 #'
-#' @return
+#' @return simulated response
 #' @export
 #'
 #' @examples

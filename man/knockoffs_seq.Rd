@@ -21,7 +21,7 @@ sequential knockoff copy of X. A data.frame or tibble of same type and dimension
 Sequential knockoffs for continuous and categorical variables
 }
 \details{
-\code{knockoffs_seq} performs sequential knockoff simulation.
+\code{knockoffs_seq} performs sequential knockoff simulation using elastic-net regression.
 }
 \examples{
 library(seqknockoff)
