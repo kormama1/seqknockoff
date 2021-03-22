@@ -32,7 +32,7 @@ library(seqknockoff)
 $$
 \Sigma_{ij} = \left \{
 \begin{array}{lr}
-1\{i \neq j\}/n, & \text{Independent,} \\
+1\{i = j\}/n, & \text{Independent,} \\
 \rho^{1\{i \neq j\}}/n, & \text{Equicorrelated,} \\
 \rho^{|i-j|}/n, & \text{AR1},
 \end{array}
