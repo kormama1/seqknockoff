@@ -8,6 +8,8 @@ vignette: >
   %\VignetteIndexEntry{seqknockoff-vignette}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+bibliography: ref.bib
+link-citations: true
 ---
 
 ```{r, include = FALSE}
@@ -19,7 +21,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-In [Kormaksson et al. (2020)](https://arxiv.org/abs/2010.14026) we presented sequential knockoffs and performed extensive simulations to evaluate performance of the methodology. In the following we demonstrate code that can be used to reproduce the preprint's results. In particular, we provide functions for generating data sets, simulating knockoffs (MX and sequential), applying the (single and multiple) knockoff filter for variable selection, visualizing selections, and finally evaluating performance in terms of false discovery rate and true positive rate.
+In [@seqknockoffpaper] we presented sequential knockoffs and performed extensive simulations to evaluate performance of the methodology. In the following we demonstrate code that can be used to reproduce the preprint's results. In particular, we provide functions for generating data sets, simulating knockoffs (MX and sequential), applying the (single and multiple) knockoff filter for variable selection, visualizing selections, and finally evaluating performance in terms of false discovery rate and true positive rate.
 
 ## Package main functions
 
@@ -201,3 +203,5 @@ Let $\tilde{X}_1, \dots, \tilde{X}_B$ denote $B$ independent knockoff copies of 
 * Return $\hat{S} = S(\hat{r})$, where $\hat{r} = \underset{r \geq 0.5}{\operatorname{argmax}} |{S(r)}|$, i.e. the largest set among $\{S(r):r \geq 0.5\}$.
 
 The first step above essentially filters out variables that don't appear more than $(100\cdot r)\%$ of the time, which would seem like a reasonable requirement in practice (e.g. with $r=0.5$). The second step above then filters the $B$ knockoff selections $S_b$ accordingly and searches for the most frequent variable set among those. The third step then establishes the final selection, namely the most liberal variable selection among the sets $\{S(r):r \geq 0.5\}$.
+
+## References
