@@ -111,7 +111,9 @@ stat_glmnet <- function(X, X_k, y, family, ...) {
 }
 
 
-#' Select variables based on (heuristic) mode of multiple variable selections
+#' Select variables based on the heuristic multiple selection algorithm from Kormaksson et al. 'Sequential
+#' knockoffs for continuous and categorical predictors: With application to a large psoriatic arthritis clinical
+#' trial pool.' Statistics in Medicine. 2021;1–16.
 #'
 #' @param S list of variable selection indices
 #' @param p number of variables. Each element of the list of selection indices should be a subset of 1:p.
@@ -132,27 +134,26 @@ stat_glmnet <- function(X, X_k, y, family, ...) {
 #' multi_select(S, p=20)
 multi_select <- function(S, p, trim=0.5) {
 
-  candidates <- 1:p
-
   countSpaces <- function(s) { sapply(gregexpr(" ", s), function(p) { sum(p>=0) } ) }
+
+  candidates <- 1:p
 
   Nknockoff <- length(S)
 
   var.freq.table <- table(factor(unlist(S), levels=candidates))
 
-  which.remove <- as.numeric(which(var.freq.table < trim*Nknockoff))
+  trim.seq <- unique(var.freq.table/Nknockoff)
+  trim.seq <- trim.seq[trim.seq >= trim]
 
-  trimmed.selected <- lapply(S, function(x) paste(setdiff(x, which.remove), collapse=" "))
-
-  model.freq.table <- table(unlist(trimmed.selected))
-
-  best.trimmed.selected <- names(which(model.freq.table==max(model.freq.table)))
-
-  # Resolve ties by choosing most parsimonious model:
-  best.single.selected <- best.trimmed.selected[which.min(countSpaces(best.trimmed.selected))]
-
-  selected <- as.integer(unlist(strsplit(best.single.selected, " ")))
+  if (length(trim.seq) > 0) {
+    selected <- lapply(trim.seq, function(x) find_single_optimal_variable_set(S, p, trim=x))
+    selected <- selected[[which.max(unlist(lapply(selected, length)))]]
+  } else {
+    selected <- integer(0)
+  }
 
   return(selected)
 
 }
+
+

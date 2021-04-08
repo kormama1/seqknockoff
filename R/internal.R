@@ -47,3 +47,44 @@ check_design <- function(X, method="seq") {
   }
 
 }
+
+
+
+#' Select variables based on (heuristic) mode of multiple variable selections
+#'
+#' Do not call this function on its own
+#'
+#' @param S list of variable selection indices
+#' @param p number of variables. Each element of the list of selection indices should be a subset of 1:p.
+#' @param trim trimming probability threshold. A sensible default is \code{trim=0.5}.
+#'
+#' @return a single "most frequent" variable selection among the multiple selections in S.
+#' @export
+#'
+#' @examples
+find_single_optimal_variable_set <- function(S, p, trim=0.5) {
+
+  candidates <- 1:p
+
+  countSpaces <- function(s) { sapply(gregexpr(" ", s), function(p) { sum(p>=0) } ) }
+
+  Nknockoff <- length(S)
+
+  var.freq.table <- table(factor(unlist(S), levels=candidates))
+
+  which.remove <- as.numeric(which(var.freq.table < trim*Nknockoff))
+
+  trimmed.selected <- lapply(S, function(x) paste(setdiff(x, which.remove), collapse=" "))
+
+  model.freq.table <- table(unlist(trimmed.selected))
+
+  best.trimmed.selected <- names(which(model.freq.table==max(model.freq.table)))
+
+  # Resolve ties by choosing most parsimonious model:
+  best.single.selected <- best.trimmed.selected[which.min(countSpaces(best.trimmed.selected))]
+
+  selected <- as.integer(unlist(strsplit(best.single.selected, " ")))
+
+  return(selected)
+
+}
